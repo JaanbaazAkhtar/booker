@@ -4,9 +4,9 @@ const Users = require('../models/Users');
 exports.createBook = async (req, res) => {
     try {
         //checkig if a book with same name and author already exist
-        const book = await Books.findOne({ title: req.body.title, author: req.body.author })
+        const book = await Books.findOne({ title: req.body.title})
         if(book) {
-            res.status(405).json({ message: 'Book already exists' })
+            return res.status(405).json({ message: 'Book already exists' })
         }
 
         //creating a new book
@@ -55,15 +55,19 @@ exports.updateBookById = async (req, res) => {
     try {
         //checking if book already exist
         const bookIdToUpdate = req.query.id
-        const book = await Books.findById({ _id: bookIdToUpdate });
+        let book = await Books.findById({ _id: bookIdToUpdate });
         if(!book) {
-            res.status(404).json({ message: 'Wrong book id'});
+            return res.status(404).json({ message: 'Wrong book id'});
+        }
+        const isBookPresent = await Books.findOne({ title: req.body.title })
+        if (isBookPresent) {
+            return res.status(406).json({ message: 'Book with this title already exist!' });
         }
         const result = await Books.findByIdAndUpdate({_id: bookIdToUpdate}, {
-            title: req.body.title ? req.body.title : book.title,
-            author: req.body.author ? req.body.author : book.author,
-            summary: req.body.summary ? req.body.summary : book.summary,
-            isbn: req.body.isbn ? req.body.isbn : book.isbn
+            title: req.body?.title ? req.body?.title : book.title,
+            author: req.body?.author ? req.body?.author : book.author,
+            summary: req.body?.summary ? req.body?.summary : book.summary,
+            isbn: req.body?.isbn ? req.body?.isbn : book.isbn
         });
         res.status(200).json({ message: 'Book updated', data: result });
     } catch(error) {
